@@ -42,6 +42,10 @@ type Manager struct {
 	WatchMode        bool
 	OS               string
 	SessionOverrides map[string]interface{} // session-only config overrides
+
+	// Functions for mocking
+	confirmedToExec  func(command string, prompt string, edit bool) (bool, string)
+	getTmuxPanesInXml func(config *config.Config) string
 }
 
 // NewManager creates a new manager agent
@@ -60,10 +64,10 @@ func NewManager(cfg *config.Config) (*Manager, error) {
 		}
 		args := strings.Join(os.Args[1:], " ")
 
-		system.TmuxSendCommandToPane(paneId, "tmuxai "+args, true)
+		_ = system.TmuxSendCommandToPane(paneId, "tmuxai "+args, true)
 		// shell initialization may take some time
 		time.Sleep(1 * time.Second)
-		system.TmuxSendCommandToPane(paneId, "Enter", false)
+		_ = system.TmuxSendCommandToPane(paneId, "Enter", false)
 		err = system.TmuxAttachSession(paneId)
 		if err != nil {
 			return nil, fmt.Errorf("system.TmuxAttachSession failed: %w", err)
@@ -83,6 +87,9 @@ func NewManager(cfg *config.Config) (*Manager, error) {
 		OS:               os,
 		SessionOverrides: make(map[string]interface{}),
 	}
+
+	manager.confirmedToExec = manager.confirmedToExecFn
+	manager.getTmuxPanesInXml = manager.getTmuxPanesInXmlFn
 
 	manager.InitExecPane()
 	return manager, nil

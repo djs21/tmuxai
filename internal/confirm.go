@@ -9,7 +9,7 @@ import (
 	"github.com/fatih/color"
 )
 
-func (m *Manager) confirmedToExec(command string, prompt string, edit bool) (bool, string) {
+func (m *Manager) confirmedToExecFn(command string, prompt string, edit bool) (bool, string) {
 	isSafe, _ := m.whitelistCheck(command)
 	if isSafe {
 		return true, command
@@ -36,7 +36,7 @@ func (m *Manager) confirmedToExec(command string, prompt string, edit bool) (boo
 		fmt.Printf("Error initializing readline: %v\n", err)
 		return false, ""
 	}
-	defer rl.Close()
+	defer func() { _ = rl.Close() }()
 
 	confirmInput, err := rl.Readline()
 	if err != nil {
@@ -71,7 +71,7 @@ func (m *Manager) confirmedToExec(command string, prompt string, edit bool) (boo
 			fmt.Printf("Error initializing readline for edit: %v\n", editErr)
 			return false, ""
 		}
-		defer editRl.Close()
+		defer func() { _ = editRl.Close() }()
 
 		// Use ReadlineWithDefault to prefill the command
 		editedCommand, editErr := editRl.ReadlineWithDefault(command)
@@ -96,7 +96,7 @@ func (m *Manager) confirmedToExec(command string, prompt string, edit bool) (boo
 		return false, ""
 	default:
 		// any other input is retry confirmation
-		return m.confirmedToExec(command, prompt, edit)
+		return m.confirmedToExecFn(command, prompt, edit)
 	}
 }
 
