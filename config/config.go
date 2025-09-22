@@ -169,18 +169,18 @@ func Load() (*Config, error) {
 
 	ResolveEnvKeyInConfig(config)
 
-// Load personas from directory
-configDir, _ := GetConfigDir()
-personasDir := filepath.Join(configDir, \"personas\")
-if err := LoadPersonasFromDir(&config.Personas, personasDir); err != nil {
-	fmt.Printf(\"Warning: Failed to load personas from directory: %v\\n\", err)
-}
+	// Load personas from directory
+	configDir, _ := GetConfigDir()
+	personasDir := filepath.Join(configDir, "personas")
+	if err := LoadPersonasFromDir(&config.Personas, personasDir); err != nil {
+		fmt.Printf("Warning: Failed to load personas from directory: %v\n", err)
+	}
 
-// Override with inline personas if present (inline takes precedence)
-if len(config.Personas) == 0 || config.DefaultPersona == \"\" {
-	config.Personas = defaultPersonas // Fallback to defaults if nothing loaded
-	config.DefaultPersona = \"pair_programmer\"
-}
+	// Override with inline personas if present (inline takes precedence)
+	if len(config.Personas) == 0 || config.DefaultPersona == "" {
+		config.Personas = defaultPersonas // Fallback to defaults if nothing loaded
+		config.DefaultPersona = "pair_programmer"
+	}
 
 	return config, nil
 }
