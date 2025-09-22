@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"strings"
 	"time"
-
-	"github.com/alvinunreal/tmuxai/config"
 )
 
 func (m *Manager) baseSystemPrompt(personaName string) string {

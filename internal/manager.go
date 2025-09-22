@@ -3,7 +3,6 @@ package internal
 import (
 	"fmt"
 	"os"
-	"regexp"
 	"strings"
 	"time"
 
@@ -96,6 +95,16 @@ func NewManager(cfg *config.Config) (*Manager, error) {
 	manager.CurrentPersona = manager.selectPersona()
 	manager.InitExecPane()
 	return manager, nil
+}
+
+// selectPersona selects the appropriate persona based on rules or defaults
+func (m *Manager) selectPersona() string {
+	// If there are persona rules, use the first one's persona
+	if len(m.Config.PersonaRules) > 0 {
+		return m.Config.PersonaRules[0].Persona
+	}
+	// Otherwise, use the default persona
+	return m.Config.DefaultPersona
 }
 
 // Start starts the manager agent
