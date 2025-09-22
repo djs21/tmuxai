@@ -3,6 +3,7 @@ package internal
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -41,6 +42,7 @@ type Manager struct {
 	ExecHistory      []CommandExecHistory
 	WatchMode        bool
 	OS               string
+	CurrentPersona   string
 	SessionOverrides map[string]interface{} // session-only config overrides
 
 	// Functions for mocking
@@ -91,6 +93,7 @@ func NewManager(cfg *config.Config) (*Manager, error) {
 	manager.confirmedToExec = manager.confirmedToExecFn
 	manager.getTmuxPanesInXml = manager.getTmuxPanesInXmlFn
 
+	manager.CurrentPersona = manager.selectPersona()
 	manager.InitExecPane()
 	return manager, nil
 }

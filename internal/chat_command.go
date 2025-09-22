@@ -3,6 +3,7 @@ package internal
 import (
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -30,6 +31,7 @@ var commands = []string{
 	"/prepare",
 	"/config",
 	"/squash",
+	"/persona",
 }
 
 // checks if the given content is a command
@@ -200,6 +202,32 @@ Watch for: ` + watchDesc
 // Helper function to check if a command matches a prefix
 func prefixMatch(command, target string) bool {
 	return strings.HasPrefix(target, command)
+}
+
+// listPersonas lists all available personas
+func (m *Manager) listPersonas() {
+	m.Println("Available personas:")
+	for name, persona := range m.Config.Personas {
+		m.Println(fmt.Sprintf("- %s: %s", name, persona.Description))
+	}
+	if len(m.Config.Personas) == 0 {
+		m.Println("No personas loaded. Check config or personas directory.")
+	}
+}
+
+// switchPersona switches to the specified persona
+func (m *Manager) switchPersona(name string) {
+	if persona, ok := m.Config.Personas[name]; ok {
+		m.CurrentPersona = name
+		m.Println(fmt.Sprintf("Switched to persona: %s - %s", name, persona.Description))
+	} else {
+		keys := make([]string, 0, len(m.Config.Personas))
+		for k := range m.Config.Personas {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		m.Println(fmt.Sprintf("Persona '%s' not found. Available: %s", name, strings.Join(keys, ", ")))
+	}
 }
 
 // formats system information and tmux details into a readable string

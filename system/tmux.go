@@ -202,3 +202,13 @@ func TmuxClearPane(paneId string) error {
 	logger.Debug("Successfully cleared pane %s", paneId)
 	return nil
 }
+
+// GetTmuxSessionName returns the name of the current tmux session
+func GetTmuxSessionName() (string, error) {
+	cmd := exec.Command("tmux", "display-message", "-p", "#{session_name}")
+	output, err := cmd.Output()
+	if err != nil {
+		return "", fmt.Errorf("failed to get tmux session name: %w", err)
+	}
+	return strings.TrimSpace(string(output)), nil
+}

@@ -4,10 +4,28 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/alvinunreal/tmuxai/config"
 )
 
-func (m *Manager) baseSystemPrompt() string {
-	basePrompt := `You are TmuxAI assistant. You are AI agent and live inside user's Tmux's window and can see all panes in that window.
+func (m *Manager) baseSystemPrompt(personaName string) string {
+	var basePrompt string
+
+	if personaName != "" {
+		if persona, ok := m.Config.Personas[personaName]; ok && persona.Prompt != "" {
+			basePrompt = persona.Prompt
+		}
+	}
+
+	if basePrompt == "" {
+		// Fallback to default persona or old config
+		defaultPersona, ok := m.Config.Personas[m.Config.DefaultPersona]
+		if ok && defaultPersona.Prompt != "" {
+			basePrompt = defaultPersona.Prompt
+		} else if m.Config.Prompts.BaseSystem != "" {
+			basePrompt = m.Config.Prompts.BaseSystem
+		} else {
+			basePrompt = `You are TmuxAI assistant. You are AI agent and live inside user's Tmux's window and can see all panes in that window.
 Think of TmuxAI as a pair programmer that sits beside user, watching users terminal window exactly as user see it.
 TmuxAI's design philosophy mirrors the way humans collaborate at the terminal. Just as a colleague sitting next to the user would observe users screen, understand context from what's visible, and help accordingly,
 TmuxAI: Observes: Reads the visible content in all your panes, Communicates and Acts: Can execute commands by calling tools.
@@ -32,18 +50,16 @@ Before calling each tool, first explain why you are calling it.
 
 You are allowed to be proactive, but only when the user asks you to do something. You should strive to strike a balance between: (a) doing the right thing when asked, including taking actions and follow-up actions, and (b) not surprising the user by taking actions without asking. For example, if the user asks you how to approach something, you should do your best to answer their question first, and not immediately jump into calling a tool.
 
-DO NOT WRITE MORE TEXT AFTER THE TOOL CALLS IN A RESPONSE. You can wait until the next response to summarize the actions you've done.
-`
-	if m.Config.Prompts.BaseSystem != "" {
-		basePrompt = m.Config.Prompts.BaseSystem
+DO NOT WRITE MORE TEXT AFTER THE TOOL CALLS IN A RESPONSE. You can wait until the next response to summarize the actions you've done.`
+		}
 	}
-	return basePrompt
 
+	return basePrompt
 }
 
 func (m *Manager) chatAssistantPrompt(prepared bool) ChatMessage {
 	var builder strings.Builder
-	builder.WriteString(m.baseSystemPrompt())
+	builder.WriteString(m.baseSystemPrompt(m.Config.DefaultPersona))
 	builder.WriteString(`
 Your primary function is to assist users by interpreting their requests and executing appropriate actions.
 You have access to the following XML tags to control the tmux pane:

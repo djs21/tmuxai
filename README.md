@@ -299,6 +299,7 @@ TmuxAI » /squash
 | `/squash`                   | Manually trigger context summarization                           |
 | `/prepare [shell]`          | Initialize Prepared Mode for the Exec Pane (e.g., bash, zsh)     |
 | `/watch <description>`      | Enable Watch Mode with specified goal                            |
+| `/persona [name]`           | List or switch to a persona                                      |
 | `/exit`                     | Exit TmuxAI                                                      |
 
 ## Command-Line Usage
@@ -414,6 +415,56 @@ azure_openai:
 ```
 
 _Prompts are currently tuned for Gemini 2.5 by default; behavior with other models may vary._
+
+### Custom Personas
+
+TmuxAI supports customizable personas to adapt the AI's behavior for different tasks (e.g., pair programmer, sysadmin, debugger). Each persona has a custom system prompt.
+
+#### Defining Personas
+
+Personas can be defined in two ways:
+
+1. **Inline in config.yaml** under the `personas` map:
+
+   ```yaml
+   personas:
+     sysadmin:
+       prompt: |
+         You are a sysadmin assistant in TmuxAI. Focus on system administration...
+       description: "Assists with system administration and ops tasks."
+   ```
+
+2. **External files** in `~/.config/tmuxai/personas/*.yaml`. The filename (without .yaml) becomes the persona key. Example `sysadmin.yaml`:
+
+   ```yaml
+   prompt: |
+     You are a sysadmin assistant in TmuxAI. Focus on system administration...
+   description: "Assists with system administration and ops tasks."
+   ```
+
+External files are loaded automatically and override inline definitions if keys conflict.
+
+See the `personas_example/` directory for sample files.
+
+#### Auto-Selection Rules
+
+Use `persona_rules` to automatically select a persona based on the tmux session name (regex match):
+
+```yaml
+persona_rules:
+  - match: "^prod-.*"
+    persona: "sysadmin"
+  - match: "^dev-.*"
+    persona: "pair_programmer"
+default_persona: "pair_programmer"
+```
+
+#### Runtime Commands
+
+- `/persona`: List all loaded personas.
+- `/persona <name>`: Switch to the specified persona (must exist).
+
+The current persona affects the system prompt for all interactions.
 
 ## Contributing
 
