@@ -179,7 +179,7 @@ Keep your response short and concise, but they should be informative and valuabl
 If no response is needed, output:
 <NoComment>1</NoComment>
 
-`, m.baseSystemPrompt())
+`, m.baseSystemPrompt(m.Config.DefaultPersona))
 
 	if m.Config.Prompts.Watch != "" {
 		chatPrompt = chatPrompt + "\n\n" + m.Config.Prompts.Watch
