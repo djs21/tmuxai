@@ -19,7 +19,8 @@ const helpMessage = `Available commands:
 - /prepare: Prepare the pane for TmuxAI automation
 - /watch <prompt>: Start watch mode
 - /squash: Summarize the chat history
-- /exit: Exit the application`
+- /exit: Exit the application
+- /persona [name]: List available personas or switch to the specified one`
 
 var commands = []string{
 	"/help",
@@ -163,6 +164,14 @@ Watch for: ` + watchDesc
 			return
 		}
 		m.Println("Usage: /watch <description>")
+		return
+
+	case prefixMatch(commandPrefix, "/persona"):
+		if len(parts) > 1 {
+			m.switchPersona(parts[1])
+		} else {
+			m.listPersonas()
+		}
 		return
 
 	case prefixMatch(commandPrefix, "/config"):
