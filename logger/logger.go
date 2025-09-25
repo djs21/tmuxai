@@ -92,6 +92,13 @@ func (l *Logger) Debug(format string, v ...interface{}) {
 	l.logger.Printf("[DEBUG] "+format, v...)
 }
 
+// Warn logs a warning message
+func (l *Logger) Warn(format string, v ...interface{}) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.logger.Printf("[WARN] "+format, v...)
+}
+
 // Info logs an info message using the singleton instance
 func Info(format string, v ...interface{}) {
 	if instance != nil {
@@ -110,5 +117,12 @@ func Error(format string, v ...interface{}) {
 func Debug(format string, v ...interface{}) {
 	if instance != nil {
 		instance.Debug(format, v...)
+	}
+}
+
+// Warn logs a warning message using the singleton instance
+func Warn(format string, v ...interface{}) {
+	if instance != nil {
+		instance.Warn(format, v...)
 	}
 }
