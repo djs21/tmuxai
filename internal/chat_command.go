@@ -226,10 +226,15 @@ func (m *Manager) listPersonas() {
 
 // switchPersona switches to the specified persona
 func (m *Manager) switchPersona(name string) {
+	logger.Debug("Attempting to switch to persona: '%s'", name)
+	logger.Debug("Current persona before switch: '%s'", m.CurrentPersona)
+
 	if persona, ok := m.Config.Personas[name]; ok {
 		m.CurrentPersona = name
+		logger.Info("Successfully switched to persona: '%s'", name)
 		m.Println(fmt.Sprintf("Switched to persona: %s - %s", name, persona.Description))
 	} else {
+		logger.Warn("Persona '%s' not found", name)
 		keys := make([]string, 0, len(m.Config.Personas))
 		for k := range m.Config.Personas {
 			keys = append(keys, k)

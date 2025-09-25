@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/alvinunreal/tmuxai/logger"
 	"github.com/rs/zerolog/log"
 )
 
@@ -13,13 +14,14 @@ func (m *Manager) baseSystemPrompt(personaName string) string {
 
 	logger.Debug("baseSystemPrompt called with personaName: '%s'", personaName)
 	logger.Debug("CurrentPersona: '%s'", m.CurrentPersona)
-
 	// Use CurrentPersona as default when personaName is empty
 	if personaName == "" {
 		personaName = m.CurrentPersona
 		log.Debug().Str("persona", personaName).Msg("Using current persona for system prompt")
+		logger.Debug("Using current persona '%s' as default", personaName)
 	}
 
+	logger.Debug("Looking for persona '%s' in configured personas", personaName)
 	if personaName != "" {
 		if persona, ok := m.Config.Personas[personaName]; ok && persona.Prompt != "" {
 			basePrompt = persona.Prompt
@@ -39,6 +41,7 @@ func (m *Manager) baseSystemPrompt(personaName string) string {
 			basePrompt = m.Config.Prompts.BaseSystem
 			logger.Debug("Using BaseSystem prompt as fallback")
 		} else {
+			logger.Debug("Using hardcoded fallback system prompt")
 			basePrompt = fmt.Sprintf(`You are TmuxAI assistant. You are AI agent and live inside user's Tmux's window and can see all panes in that window.
 Think of TmuxAI as a pair programmer that sits beside user, watching users terminal window exactly as user see it.
 TmuxAI's design philosophy mirrors the way humans collaborate at the terminal. Just as a colleague sitting next to the user would observe users screen, understand context from what's visible, and help accordingly,
@@ -66,10 +69,12 @@ You are allowed to be proactive, but only when the user asks you to do something
 
 DO NOT WRITE MORE TEXT AFTER THE TOOL CALLS IN A RESPONSE. You can wait until the next response to summarize the actions you've done.`
 )
+`)
 			logger.Debug("Using hardcoded fallback system prompt")
 		}
 	}
 
+	logger.Debug("Final basePrompt length: %d characters", len(basePrompt))
 	logger.Debug("Final basePrompt length: %d characters", len(basePrompt))
 	return basePrompt
 }

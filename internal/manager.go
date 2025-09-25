@@ -45,7 +45,7 @@ type Manager struct {
 	SessionOverrides map[string]interface{} // session-only config overrides
 
 	// Functions for mocking
-	confirmedToExec  func(command string, prompt string, edit bool) (bool, string)
+	confirmedToExec   func(command string, prompt string, edit bool) (bool, string)
 	getTmuxPanesInXml func(config *config.Config) string
 }
 
@@ -180,5 +180,3 @@ func (ai *AIResponse) String() string {
 		ai.NoComment,
 	)
 }
-	"github.com/alvinunreal/tmuxai/logger"
-
