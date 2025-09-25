@@ -93,6 +93,7 @@ func NewManager(cfg *config.Config) (*Manager, error) {
 	manager.getTmuxPanesInXml = manager.getTmuxPanesInXmlFn
 
 	manager.CurrentPersona = manager.selectPersona()
+	logger.Debug("Selected persona: %s", manager.CurrentPersona)
 	manager.InitExecPane()
 	return manager, nil
 }
@@ -179,3 +180,5 @@ func (ai *AIResponse) String() string {
 		ai.NoComment,
 	)
 }
+	"github.com/alvinunreal/tmuxai/logger"
+

@@ -2,7 +2,6 @@ package internal
 
 import (
 	"fmt"
-	"fmt"
 	"strings"
 	"time"
 
@@ -12,24 +11,33 @@ import (
 func (m *Manager) baseSystemPrompt(personaName string) string {
 	var basePrompt string
 
+	logger.Debug("baseSystemPrompt called with personaName: '%s'", personaName)
+	logger.Debug("CurrentPersona: '%s'", m.CurrentPersona)
+
+	// Use CurrentPersona as default when personaName is empty
 	if personaName == "" {
 		personaName = m.CurrentPersona
+		log.Debug().Str("persona", personaName).Msg("Using current persona for system prompt")
 	}
 
 	if personaName != "" {
 		if persona, ok := m.Config.Personas[personaName]; ok && persona.Prompt != "" {
 			basePrompt = persona.Prompt
+			logger.Debug("Using configured persona '%s' for system prompt", personaName)
+		} else {
+			logger.Debug("Persona '%s' not found or has no prompt", personaName)
 		}
 	}
 
-	log.Debug().Str("persona", personaName).Msg("Using persona for system prompt")
 	if basePrompt == "" {
-		// Fallback to default persona or old config
-		defaultPersona, ok := m.Config.Personas[m.Config.DefaultPersona]
-		if ok && defaultPersona.Prompt != "" {
-			basePrompt = defaultPersona.Prompt
+		// Fallback to current persona or old config
+		currentPersona, ok := m.Config.Personas[m.CurrentPersona]
+		if ok && currentPersona.Prompt != "" {
+			basePrompt = currentPersona.Prompt
+			logger.Debug("Using current persona '%s' as fallback", m.CurrentPersona)
 		} else if m.Config.Prompts.BaseSystem != "" {
 			basePrompt = m.Config.Prompts.BaseSystem
+			logger.Debug("Using BaseSystem prompt as fallback")
 		} else {
 			basePrompt = fmt.Sprintf(`You are TmuxAI assistant. You are AI agent and live inside user's Tmux's window and can see all panes in that window.
 Think of TmuxAI as a pair programmer that sits beside user, watching users terminal window exactly as user see it.
@@ -57,16 +65,20 @@ Before calling each tool, first explain why you are calling it.
 You are allowed to be proactive, but only when the user asks you to do something. You should strive to strike a balance between: (a) doing the right thing when asked, including taking actions and follow-up actions, and (b) not surprising the user by taking actions without asking. For example, if the user asks you how to approach something, you should do your best to answer their question first, and not immediately jump into calling a tool.
 
 DO NOT WRITE MORE TEXT AFTER THE TOOL CALLS IN A RESPONSE. You can wait until the next response to summarize the actions you've done.`
-			log.Debug().Msg("Using fallback default system prompt")
+)
+			logger.Debug("Using hardcoded fallback system prompt")
 		}
 	}
 
+	logger.Debug("Final basePrompt length: %d characters", len(basePrompt))
 	return basePrompt
 }
 
 func (m *Manager) chatAssistantPrompt(prepared bool) ChatMessage {
 	var builder strings.Builder
-	builder.WriteString(m.baseSystemPrompt(m.Config.DefaultPersona))
+	builder.WriteString(m.baseSystemPrompt(""))
+	log.Debug().Str("persona", m.CurrentPersona).Msg("Using current persona for chat assistant prompt")
+
 	builder.WriteString(`
 Your primary function is to assist users by interpreting their requests and executing appropriate actions.
 You have access to the following XML tags to control the tmux pane:
@@ -87,20 +99,20 @@ You have access to the following XML tags to control the tmux pane:
 When responding to user messages:
 1. Analyze the user's request carefully.
 2. Analyze the user's current tmux pane(s) content and detect: 
-- what is current there running based on content, deduced especially from the last lines
+- what is currently running there based on content, deduced especially from the last lines
 - is the pane busy running a command or is it idle
-- should you wait or you should proceed
+- should you wait or should you proceed
 
-3. Based on your analysis, choose the most appropriate action required and call it at the end of your response with appropriate tool. Always should be at least 1 XML tag.
+3. Based on your analysis, choose the most appropriate action required and call it at the end of your response with appropriate tool. There should always be at least 1 XML tag.
 4. Respond with user message with normal text and place function calls at the end of your response.
 
-Avoid creating a script files to achieve a task, if the same task can be achieve just by calling one or multiple ExecCommand.
+Avoid creating script files to achieve a task, if the same task can be achieved just by calling one or multiple ExecCommand.
 Avoid creating files, command output files, intermediate files unless necessary.
 There is no need to use echo to print information content. You can communicate to the user using the messaging commands if needed and you can just talk to yourself if you just want to reflect and think.
 Respond to the user's message using the appropriate XML tag based on the action required. Include a brief explanation of what you're doing, followed by the XML tag.
 
-When generating your response you will be PUNISHED if you don't follow those 3 rules:
-- Check the length of ExecCommand content. Is more than 60 characters? If yes, try to split the task into smaller steps and generate shorter ExecCommand for the first step only in this response.
+When generating your response you will be PUNISHED if you don't follow these rules:
+- Check the length of ExecCommand content. Is it more than 60 characters? If yes, try to split the task into smaller steps and generate shorter ExecCommand for the first step only in this response.
 - Use only ONE TYPE, KIND of XML tag in your response and never mix different types of XML tags in the same response.
 - Always include at least one XML tag in your response.
 - Learn from examples what I mean:
@@ -116,7 +128,7 @@ I'll open the file 'example.txt' in vim for you.
 </sending_keystrokes_example>
 
 <sending_keystrokes_example>
-I'll open delete line 10 in file 'example.txt' in vim for you.
+I'll delete line 10 in file 'example.txt' in vim for you.
 <TmuxSendKeys>vim example.txt</TmuxSendKeys>
 <TmuxSendKeys>Enter</TmuxSendKeys>
 <TmuxSendKeys>10G</TmuxSendKeys>
@@ -176,19 +188,20 @@ I'll wait for it to complete before proceeding.
 }
 
 func (m *Manager) watchPrompt() ChatMessage {
+	log.Debug().Str("persona", m.CurrentPersona).Msg("Using current persona for watch prompt")
 	chatPrompt := fmt.Sprintf(`
 %s
-You are current in watch mode and assisting user by watching the pane content.
-Use your common sense to decide if when it's actually valuable and needed to respond for the given watch goal.
+You are currently in watch mode and assisting user by watching the pane content.
+Use your common sense to decide when it's actually valuable and needed to respond for the given watch goal.
 
 If you respond:
 Provide your response based on the current pane content.
-Keep your response short and concise, but they should be informative and valuable for the user.
+Keep your response short and concise, but it should be informative and valuable for the user.
 
 If no response is needed, output:
 <NoComment>1</NoComment>
 
-`, m.baseSystemPrompt(m.Config.DefaultPersona))
+`, m.baseSystemPrompt(""))
 
 	if m.Config.Prompts.Watch != "" {
 		chatPrompt = chatPrompt + "\n\n" + m.Config.Prompts.Watch
