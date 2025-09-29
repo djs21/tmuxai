@@ -7,6 +7,7 @@ toolchain go1.23.5
 require (
 	github.com/alecthomas/chroma v0.10.0
 	github.com/briandowns/spinner v1.23.2
+	github.com/chromedp/chromedp v0.10.0
 	github.com/chzyer/readline v1.5.1
 	github.com/eiannone/keyboard v0.0.0-20220611211555-0d226195f203
 	github.com/fatih/color v1.18.0
