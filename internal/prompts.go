@@ -89,6 +89,8 @@ func (m *Manager) chatAssistantPrompt(prepared bool) ChatMessage {
 		"<WaitingForUserResponse>: Use this boolean tag (value 1) when you have a question, need input or clarification from the user to accomplish the request.\n" +
 		"<RequestAccomplished>: Use this boolean tag (value 1) when you have successfully completed and verified the user's request.\n")
 
+	builder.WriteString("<BrowserAction>: Use this to perform browser actions via Browserless. The content should be a JSON object, e.g., {\"action\": \"navigate\", \"url\": \"https://example.com\"} for navigation, {\"action\": \"screenshot\"} for full page screenshot, {\"action\": \"getText\", \"selector\": \"body\"} for extracting text. Available actions: navigate(url), screenshot(), getText(selector).\n")
+
 	if !prepared {
 		builder.WriteString("<ExecPaneSeemsBusy>: Use this boolean tag (value 1) when you need to wait for the exec pane to finish before proceeding.")
 	}
@@ -148,6 +150,18 @@ func (m *Manager) chatAssistantPrompt(prepared bool) ChatMessage {
 		"<WaitingForUserResponse>1</WaitingForUserResponse>\n" +
 		"</executing_a_command_example>\n\n")
 
+	builder.WriteString("<browser_navigate_example>\n" +
+		"I'll navigate to the website for you.\n" +
+		"<BrowserAction>{\"action\": \"navigate\", \"url\": \"https://example.com\"}</BrowserAction>\n" +
+		"</browser_navigate_example>\n\n" +
+		"<browser_screenshot_example>\n" +
+		"Taking a screenshot of the page.\n" +
+		"<BrowserAction>{\"action\": \"screenshot\"}</BrowserAction>\n" +
+		"</browser_screenshot_example>\n\n" +
+		"<browser_gettext_example>\n" +
+		"Extracting the main content.\n" +
+		"<BrowserAction>{\"action\": \"getText\", \"selector\": \"h1\"}</BrowserAction>\n" +
+		"</browser_gettext_example>\n\n")
 
 	builder.WriteString("</examples_of_responses>\n")
 
