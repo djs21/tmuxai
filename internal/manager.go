@@ -2,7 +2,6 @@ package internal
 
 import (
 	"encoding/json"
-	"encoding/json"
 	"fmt"
 	"os"
 	"strings"

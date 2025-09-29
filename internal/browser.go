@@ -29,28 +29,33 @@ func (b *BrowserClient) Connect() error {
 		return fmt.Errorf("browserless token required")
 	}
 
-	allocCtx, cancel := chromedp.NewRemoteAllocator(context.Background(),
+	wsURL := b.config.Browserless.BaseURL + "?token=" + b.config.Browserless.Token
+
+	// Create remote allocator
+	allocCtx, allocCancel := chromedp.NewRemoteAllocator(context.Background(), wsURL,
+		chromedp.Flag("headless", true),
 		chromedp.WithDebugf(func(s string, i ...interface{}) { logger.Debug(s, i...) }),
 		chromedp.WithLogf(func(s string, i ...interface{}) { logger.Info(s, i...) }),
 	)
-
 	if allocCtx == nil {
+		allocCancel()
 		return fmt.Errorf("failed to create remote allocator")
 	}
 
-	wsURL := b.config.Browserless.BaseURL + "?token=" + b.config.Browserless.Token
-	opts := append(chromedp.DefaultExecAllocatorOptions[:], chromedp.Flag("headless", true))
 	b.allocCtx = allocCtx
-	b.cancel = cancel
+	b.cancel = allocCancel
 
-	browserCtx, cancel := chromedp.NewContext(
-		allocCtx,
+	// Create browser context
+	browserCtx, browserCancel := chromedp.NewContext(
+		b.allocCtx,
 		chromedp.WithDebugf(func(s string, i ...interface{}) { logger.Debug(s, i...) }),
 	)
 	b.browser = browserCtx
 
-	cdpCtx, cancel := chromedp.NewContext(browserCtx)
+	// Create CDP context
+	cdpCtx, cdpCancel := chromedp.NewContext(browserCtx)
 	b.cdpCtx = cdpCtx
+	// Store the final cancel function that will cancel everything
 	b.connected = true
 
 	logger.Info("Connected to Browserless at %s", wsURL)
