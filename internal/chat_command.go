@@ -2,6 +2,8 @@ package internal
 
 import (
 	"fmt"
+import (
+	"fmt"
 	"os"
 	"sort"
 	"strings"
@@ -33,6 +35,7 @@ var commands = []string{
 	"/config",
 	"/squash",
 	"/persona",
+	"/browser",
 }
 
 // checks if the given content is a command
@@ -172,6 +175,49 @@ Watch for: ` + watchDesc
 		} else {
 			m.listPersonas()
 		}
+		return
+
+	case prefixMatch(commandPrefix, "/browser"):
+		if len(parts) < 2 {
+			m.Println("usage: /browser <action> [params]")
+			return
+		}
+
+		action := parts[1]
+		var actionJSON string
+
+		switch action {
+		case "navigate":
+			if len(parts) < 3 {
+				m.Println("url required")
+				return
+			}
+			actionJSON = fmt.Sprintf(`{"action":"navigate","url":"%s"}`, parts[2])
+		case "screenshot":
+			actionJSON = `{"action":"screenshot"}`
+		case "getText":
+			selector := "body"
+			if len(parts) > 2 {
+				selector = parts[2]
+			}
+			actionJSON = fmt.Sprintf(`{"action":"getText","selector":"%s"}`, selector)
+		default:
+			m.Println(fmt.Sprintf("unknown action: %s", action))
+			return
+		}
+
+		if m.browserClient == nil {
+			m.Println("BrowserClient not initialized. Configure browserless.token")
+			return
+		}
+
+		result, err := m.executeBrowserAction(actionJSON)
+		if err != nil {
+			m.Println(fmt.Sprintf("Error: %v", err))
+			return
+		}
+
+		m.Println(fmt.Sprintf("Success: %s", result))
 		return
 
 	case prefixMatch(commandPrefix, "/config"):
