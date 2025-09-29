@@ -217,9 +217,13 @@ func (m *Manager) ProcessUserMessage(ctx context.Context, message string) bool {
 
 		if isSafe {
 			m.Println("Performing browser action...")
-			// TODO: Implement browser action execution
-			// This would call a browser service to perform the action
-			logger.Debug("Browser action would be executed: %s", r.BrowserAction)
+			result, err := m.executeBrowserAction(r.BrowserAction)
+			if err != nil {
+				m.Println(fmt.Sprintf("Browser action failed: %v", err))
+				m.Status = ""
+				return false
+			}
+			m.Println(fmt.Sprintf("Browser action result: %s", result))
 		} else {
 			m.Status = ""
 			return false
