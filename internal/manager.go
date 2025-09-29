@@ -126,6 +126,14 @@ func (m *Manager) selectPersona() string {
 // Start starts the manager agent
 func (m *Manager) Start(initMessage string) error {
 	cliInterface := NewCLIInterface(m)
+
+	// Ensure browser client is closed when we're done
+	defer func() {
+		if m.browserClient != nil {
+			m.browserClient.Close()
+		}
+	}()
+
 	if initMessage != "" {
 		logger.Info("Initial task provided: %s", initMessage)
 	}
@@ -139,6 +147,43 @@ func (m *Manager) Start(initMessage string) error {
 
 // executeBrowserAction executes browser actions based on the action string
 func (m *Manager) executeBrowserAction(action string) (string, error) {
+	ctx := context.Background()
+
+	switch action {
+	case "navigate_home":
+		err := m.browserClient.Navigate(ctx, "https://www.google.com")
+		if err != nil {
+			return "", fmt.Errorf("failed to navigate to home: %v", err)
+		}
+		return "Navigated to Google homepage", nil
+	case "take_screenshot":
+		screenshot, err := m.browserClient.Screenshot(ctx)
+		if err != nil {
+			return "", fmt.Errorf("failed to take screenshot: %v", err)
+		}
+		// For now, just return success message since we can't display image in CLI
+		return fmt.Sprintf("Screenshot taken (%d bytes)", len(screenshot)), nil
+	case "get_page_text":
+		text, err := m.browserClient.GetText(ctx, "body")
+		if err != nil {
+			return "", fmt.Errorf("failed to get page text: %v", err)
+		}
+		// Return first 200 characters to avoid too much output
+		if len(text) > 200 {
+			text = text[:200] + "..."
+		}
+		return fmt.Sprintf("Page text: %s", text), nil
+	default:
+		return "", fmt.Errorf("unknown browser action: %s", action)
+	}
+}
+
+// executeBrowserAction executes browser actions based on the action string
+func (m *Manager) executeBrowserAction(action string) (string, error) {
+	if m.browserClient == nil {
+		return "", fmt.Errorf("browser client not initialized")
+	}
+
 	ctx := context.Background()
 
 	switch action {
