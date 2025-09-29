@@ -49,6 +49,9 @@
   - [Environment Variables](#environment-variables)
   - [Session-Specific Configuration](#session-specific-configuration)
   - [Using Other AI Providers](#using-other-ai-providers)
+  - [Browserless Integration](#browserless-integration)
+- [Custom Personas](#custom-personas)
+## Browser Integration](#browser-integration)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -300,6 +303,7 @@ TmuxAI » /squash
 | `/prepare [shell]`          | Initialize Prepared Mode for the Exec Pane (e.g., bash, zsh)     |
 | `/watch <description>`      | Enable Watch Mode with specified goal                            |
 | `/persona [name]`           | List or switch to a persona                                      |
+| `/browser <action> [params]` | Perform browser actions: navigate &lt;url&gt;, screenshot, getText [&lt;selector&gt;] |
 | `/exit`                     | Exit TmuxAI                                                      |
 
 ## Command-Line Usage
@@ -416,6 +420,23 @@ azure_openai:
 
 _Prompts are currently tuned for Gemini 2.5 by default; behavior with other models may vary._
 
+### Browserless Integration
+
+TmuxAI supports browser automation via Browserless.io, enabling web navigation, screenshots, and text extraction.
+
+To enable:
+
+- Sign up at [Browserless.io](https://www.browserless.io/) and get a token.
+- Add to your config.yaml:
+
+```yaml
+browserless:
+  token: your-browserless-token-here
+  base_url: wss://chrome.browserless.io  # Optional, defaults to Browserless cloud
+```
+
+With this, TmuxAI connects to a remote headless Chrome instance for web tasks.
+
 ### Custom Personas
 
 TmuxAI supports customizable personas to adapt the AI's behavior for different tasks (e.g., pair programmer, sysadmin, debugger). Each persona has a custom system prompt.
@@ -495,6 +516,35 @@ Debug output will show:
 - Which persona is being used
 - Fallback behavior details
 - Configuration loading information
+
+## Contributing
+
+TmuxAI's browser integration allows interaction with web pages directly from your terminal session.
+
+### Features
+- **Navigate**: Load a URL in a headless browser.
+- **Screenshot**: Capture the current page as an image (returned as bytes, useful for further processing).
+- **Get Text**: Extract text content from a selector (default: body).
+
+### Manual Usage
+Use the `/browser` command:
+- `/browser navigate https://example.com` - Navigate to a website.
+- `/browser screenshot` - Take a screenshot of the current page.
+- `/browser getText h1` - Extract text from the h1 element (or 'body' by default).
+
+### AI-Driven Usage
+The AI can autonomously perform browser actions using the `<BrowserAction>` tag in its responses. For example:
+- Navigate: `{"action": "navigate", "url": "https://example.com"}`
+- Screenshot: `{"action": "screenshot"}`
+- Get Text: `{"action": "getText", "selector": "body"}`
+
+When the AI suggests a browser action, you'll be prompted for confirmation before execution.
+
+### Requirements
+- Browserless token (free tier available).
+- The chromedp library is included in the build.
+
+This feature enhances TmuxAI for web scraping, testing, and automation tasks within your tmux workflow.
 
 ## Contributing
 
