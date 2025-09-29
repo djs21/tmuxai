@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -35,6 +36,7 @@ type CommandExecHistory struct {
 type Manager struct {
 	Config           *config.Config
 	AiClient         *AiClient
+	browserClient    *BrowserClient
 	Status           string // running, waiting, done
 	PaneId           string
 	ExecPane         *system.TmuxPaneDetails
@@ -88,6 +90,17 @@ func NewManager(cfg *config.Config) (*Manager, error) {
 		ExecPane:         &system.TmuxPaneDetails{},
 		OS:               os,
 		SessionOverrides: make(map[string]interface{}),
+	}
+
+	// Initialize BrowserClient if Browserless token is configured
+	if cfg.Browserless.Token != "" {
+		manager.browserClient = NewBrowserClient(cfg)
+		if err := manager.browserClient.Connect(); err != nil {
+			logger.Error("Failed to initialize BrowserClient: %v", err)
+			manager.browserClient = nil
+		} else {
+			logger.Info("BrowserClient connected successfully")
+		}
 	}
 
 	manager.confirmedToExec = manager.confirmedToExecFn
