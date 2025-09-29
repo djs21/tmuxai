@@ -2,6 +2,7 @@ package internal
 
 import (
 	"encoding/json"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -146,36 +147,31 @@ func (m *Manager) Start(initMessage string) error {
 }
 
 // executeBrowserAction executes browser actions based on the action string
-func (m *Manager) executeBrowserAction(action string) (string, error) {
+func (m *Manager) executeBrowserAction(actionJSON string) (string, error) {
+	if m.browserClient == nil {
+		return "", fmt.Errorf("browser client not initialized")
+	}
+
+	// Parse the JSON action
+	var actionData struct {
+		Action   string `json:"action"`
+		URL      string `json:"url,omitempty"`
+		Selector string `json:"selector,omitempty"`
+	}
+
+	if err := json.Unmarshal([]byte(actionJSON), &actionData); err != nil {
+		return "", fmt.Errorf("invalid action JSON: %v", err)
+	}
+
+	// Parse the JSON action
+	var actionData struct {
+		Action   string `json:"action"`
+		URL      string `json:"url,omitempty"`
+		Selector string `json:"selector,omitempty"`
+	}
 	ctx := context.Background()
 
-	switch action {
-	case "navigate_home":
-		err := m.browserClient.Navigate(ctx, "https://www.google.com")
-		if err != nil {
-			return "", fmt.Errorf("failed to navigate to home: %v", err)
-		}
-		return "Navigated to Google homepage", nil
-	case "take_screenshot":
-		screenshot, err := m.browserClient.Screenshot(ctx)
-		if err != nil {
-			return "", fmt.Errorf("failed to take screenshot: %v", err)
-		}
-		// For now, just return success message since we can't display image in CLI
-		return fmt.Sprintf("Screenshot taken (%d bytes)", len(screenshot)), nil
-	case "get_page_text":
-		text, err := m.browserClient.GetText(ctx, "body")
-		if err != nil {
-			return "", fmt.Errorf("failed to get page text: %v", err)
-		}
-		// Return first 200 characters to avoid too much output
-		if len(text) > 200 {
-			text = text[:200] + "..."
-		}
-		return fmt.Sprintf("Page text: %s", text), nil
-	default:
-		return "", fmt.Errorf("unknown browser action: %s", action)
-	}
+	return m.Config.DefaultPersona
 }
 
 // executeBrowserAction executes browser actions based on the action string
@@ -195,8 +191,20 @@ func (m *Manager) executeBrowserAction(actionJSON string) (string, error) {
 		return "", fmt.Errorf("invalid action JSON: %v", err)
 	}
 
+	// Parse the JSON action
+	var actionData struct {
+		Action   string `json:"action"`
+		URL      string `json:"url,omitempty"`
+		Selector string `json:"selector,omitempty"`
+	}
+
+	if err := json.Unmarshal([]byte(actionJSON), &actionData); err != nil {
+		return "", fmt.Errorf("invalid action JSON: %v", err)
+	}
+
 	ctx := context.Background()
 
+	switch actionData.Action {
 	switch actionData.Action {
 	case "navigate_home":
 		err := m.browserClient.Navigate(ctx, "https://www.google.com")
@@ -213,7 +221,17 @@ func (m *Manager) executeBrowserAction(actionJSON string) (string, error) {
 			return "", fmt.Errorf("failed to navigate to %s: %v", actionData.URL, err)
 		}
 		return fmt.Sprintf("Navigated to %s", actionData.URL), nil
+	case "navigate":
+		if actionData.URL == "" {
+			return "", fmt.Errorf("url required for navigate action")
+		}
+		err := m.browserClient.Navigate(ctx, actionData.URL)
+		if err != nil {
+			return "", fmt.Errorf("failed to navigate to %s: %v", actionData.URL, err)
+		}
+		return fmt.Sprintf("Navigated to %s", actionData.URL), nil
 	case "take_screenshot":
+	case "screenshot":
 	case "screenshot":
 		screenshot, err := m.browserClient.Screenshot(ctx)
 		if err != nil {
@@ -222,6 +240,11 @@ func (m *Manager) executeBrowserAction(actionJSON string) (string, error) {
 		// For now, just return success message since we can't display image in CLI
 		return fmt.Sprintf("Screenshot taken (%d bytes)", len(screenshot)), nil
 	case "get_page_text":
+	case "getText":
+		selector := actionData.Selector
+		if selector == "" {
+			selector = "body"
+		}
 	case "getText":
 		selector := actionData.Selector
 		if selector == "" {
@@ -237,6 +260,7 @@ func (m *Manager) executeBrowserAction(actionJSON string) (string, error) {
 		}
 		return fmt.Sprintf("Page text: %s", text), nil
 	default:
+		return "", fmt.Errorf("unknown browser action: %s", actionData.Action)
 		return "", fmt.Errorf("unknown browser action: %s", actionData.Action)
 	}
 }
