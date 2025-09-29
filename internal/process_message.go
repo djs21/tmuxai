@@ -203,6 +203,29 @@ func (m *Manager) ProcessUserMessage(ctx context.Context, message string) bool {
 		}
 	}
 
+	// Process BrowserAction
+	if r.BrowserAction != "" {
+		code, _ := system.HighlightCode("json", r.BrowserAction)
+		m.Println("Browser action: " + code)
+
+		isSafe := false
+		if m.GetExecConfirm() {
+			isSafe, _ = m.confirmedToExec(r.BrowserAction, "Perform this browser action?", false)
+		} else {
+			isSafe = true
+		}
+
+		if isSafe {
+			m.Println("Performing browser action...")
+			// TODO: Implement browser action execution
+			// This would call a browser service to perform the action
+			logger.Debug("Browser action would be executed: %s", r.BrowserAction)
+		} else {
+			m.Status = ""
+			return false
+		}
+	}
+
 	if r.ExecPaneSeemsBusy {
 		m.Countdown(m.GetWaitInterval())
 		// Create a new context for this recursive call
@@ -258,6 +281,56 @@ func (m *Manager) ProcessUserMessage(ctx context.Context, message string) bool {
 		}
 	}
 	return false
+}
+
+func (m *Manager) parseAIResponse(response string) (AIResponse, error) {
+	r := AIResponse{}
+	r.Message = response
+
+	// Extract BrowserAction
+	browserActionRegex := regexp.MustCompile(`(?s)<BrowserAction>(.*?)</BrowserAction>`)
+	if browserActionMatches := browserActionRegex.FindStringSubmatch(response); len(browserActionMatches) > 1 {
+		browserActionContent := strings.TrimSpace(browserActionMatches[1])
+		// Validate JSON format
+		var testMap map[string]interface{}
+		if err := json.Unmarshal([]byte(browserActionContent), &testMap); err == nil {
+			r.BrowserAction = browserActionContent
+		} else {
+			logger.Debug("Invalid BrowserAction JSON: %v", err)
+		}
+	}
+
+	// Extract TmuxSendKeys
+	sendKeysRegex := regexp.MustCompile(`(?s)<TmuxSendKeys>(.*?)</TmuxSendKeys>`)
+	sendKeysMatches := sendKeysRegex.FindAllStringSubmatch(response, -1)
+	for _, match := range sendKeysMatches {
+		if len(match) > 1 {
+			r.SendKeys = append(r.SendKeys, strings.TrimSpace(match[1]))
+		}
+	}
+
+	// Extract ExecCommand
+	execCommandRegex := regexp.MustCompile(`(?s)<ExecCommand>(.*?)</ExecCommand>`)
+	execCommandMatches := execCommandRegex.FindAllStringSubmatch(response, -1)
+	for _, match := range execCommandMatches {
+		if len(match) > 1 {
+			r.ExecCommand = append(r.ExecCommand, strings.TrimSpace(match[1]))
+		}
+	}
+
+	// Extract PasteMultilineContent
+	pasteRegex := regexp.MustCompile(`(?s)<PasteMultilineContent>(.*?)</PasteMultilineContent>`)
+	if pasteMatches := pasteRegex.FindStringSubmatch(response); len(pasteMatches) > 1 {
+		r.PasteMultilineContent = strings.TrimSpace(pasteMatches[1])
+	}
+
+	// Extract boolean flags
+	r.RequestAccomplished = strings.Contains(response, "<RequestAccomplished>1</RequestAccomplished>")
+	r.ExecPaneSeemsBusy = strings.Contains(response, "<ExecPaneSeemsBusy>1</ExecPaneSeemsBusy>")
+	r.WaitingForUserResponse = strings.Contains(response, "<WaitingForUserResponse>1</WaitingForUserResponse>")
+	r.NoComment = strings.Contains(response, "<NoComment>1</NoComment>")
+
+	return r, nil
 }
 
 func (m *Manager) startWatchMode(desc string) {
