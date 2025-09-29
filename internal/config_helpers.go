@@ -15,6 +15,7 @@ var AllowedConfigKeys = []string{
 	"paste_multiline_confirm",
 	"exec_confirm",
 	"openrouter.model",
+	"browserless.base_url",
 }
 
 // GetMaxCaptureLines returns the max capture lines value with session override if present
@@ -81,6 +82,21 @@ func (m *Manager) GetOpenRouterModel() string {
 		}
 	}
 	return m.Config.OpenRouter.Model
+}
+
+// GetBrowserlessToken returns the browserless token value
+func (m *Manager) GetBrowserlessToken() string {
+	return m.Config.Browserless.Token
+}
+
+// GetBrowserlessBaseURL returns the browserless base URL value with session override if present
+func (m *Manager) GetBrowserlessBaseURL() string {
+	if override, exists := m.SessionOverrides["browserless.base_url"]; exists {
+		if val, ok := override.(string); ok {
+			return val
+		}
+	}
+	return m.Config.Browserless.BaseURL
 }
 
 // FormatConfig returns a nicely formatted string of all config values with session overrides applied

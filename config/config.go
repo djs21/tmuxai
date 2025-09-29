@@ -13,21 +13,22 @@ import (
 
 // Config holds the application configuration
 type Config struct {
-	Debug                 bool              `mapstructure:"debug"`
-	MaxCaptureLines       int               `mapstructure:"max_capture_lines"`
-	MaxContextSize        int               `mapstructure:"max_context_size"`
-	WaitInterval          int               `mapstructure:"wait_interval"`
-	SendKeysConfirm       bool              `mapstructure:"send_keys_confirm"`
-	PasteMultilineConfirm bool              `mapstructure:"paste_multiline_confirm"`
-	ExecConfirm           bool              `mapstructure:"exec_confirm"`
-	WhitelistPatterns     []string          `mapstructure:"whitelist_patterns"`
-	BlacklistPatterns     []string          `mapstructure:"blacklist_patterns"`
-	OpenRouter            OpenRouterConfig  `mapstructure:"openrouter"`
-	AzureOpenAI           AzureOpenAIConfig `mapstructure:"azure_openai"`
-	Prompts               PromptsConfig     `mapstructure:"prompts"`
+	Debug                 bool               `mapstructure:"debug"`
+	MaxCaptureLines       int                `mapstructure:"max_capture_lines"`
+	MaxContextSize        int                `mapstructure:"max_context_size"`
+	WaitInterval          int                `mapstructure:"wait_interval"`
+	SendKeysConfirm       bool               `mapstructure:"send_keys_confirm"`
+	PasteMultilineConfirm bool               `mapstructure:"paste_multiline_confirm"`
+	ExecConfirm           bool               `mapstructure:"exec_confirm"`
+	WhitelistPatterns     []string           `mapstructure:"whitelist_patterns"`
+	BlacklistPatterns     []string           `mapstructure:"blacklist_patterns"`
+	OpenRouter            OpenRouterConfig   `mapstructure:"openrouter"`
+	AzureOpenAI           AzureOpenAIConfig  `mapstructure:"azure_openai"`
+	Browserless           BrowserlessConfig  `mapstructure:"browserless"`
+	Prompts               PromptsConfig      `mapstructure:"prompts"`
 	Personas              map[string]*Persona `mapstructure:"personas"`
-	PersonaRules          []PersonaRule     `mapstructure:"persona_rules"`
-	DefaultPersona        string            `mapstructure:"default_persona"`
+	PersonaRules          []PersonaRule      `mapstructure:"persona_rules"`
+	DefaultPersona        string             `mapstructure:"default_persona"`
 }
 
 // OpenRouterConfig holds OpenRouter API configuration
@@ -43,6 +44,12 @@ type AzureOpenAIConfig struct {
 	APIBase        string `mapstructure:"api_base"`
 	APIVersion     string `mapstructure:"api_version"`
 	DeploymentName string `mapstructure:"deployment_name"`
+}
+
+// BrowserlessConfig holds Browserless API configuration
+type BrowserlessConfig struct {
+	Token   string `mapstructure:"token"`
+	BaseURL string `mapstructure:"base_url"`
 }
 
 // PromptsConfig holds customizable prompt templates
@@ -114,6 +121,10 @@ DO NOT WRITE MORE TEXT AFTER THE TOOL CALLS IN A RESPONSE. You can wait until th
 			Model:   "google/gemini-2.5-flash-preview",
 		},
 		AzureOpenAI: AzureOpenAIConfig{},
+		Browserless: BrowserlessConfig{
+			BaseURL: "wss://chrome.browserless.io",
+			Token:   "",
+		},
 		Prompts: PromptsConfig{
 			BaseSystem:    ``,
 			ChatAssistant: ``,
