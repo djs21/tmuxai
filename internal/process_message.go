@@ -2,7 +2,10 @@ package internal
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/alvinunreal/tmuxai/logger"
@@ -285,29 +288,21 @@ func (m *Manager) startWatchMode(desc string) {
 func (m *Manager) aiFollowedGuidelines(r AIResponse) (string, bool) {
 	// Check if only one boolean is true in AI response
 	boolCount := 0
-	if r.RequestAccomplished {
-		boolCount++
-	}
-	if r.ExecPaneSeemsBusy {
-		boolCount++
-	}
-	if r.WaitingForUserResponse {
-		boolCount++
-	}
-	if r.NoComment {
-		boolCount++
-	}
+	if r.RequestAccomplished { boolCount++ }
+	if r.ExecPaneSeemsBusy { boolCount++ }
+	if r.WaitingForUserResponse { boolCount++ }
+	if r.NoComment { boolCount++ }
 
 	if boolCount > 1 {
 		return "You didn't follow the guidelines. Only one boolean flag should be set to true in your response. Pay attention!", false
 	}
 
 	// Check if only one tag is used
-	tags := []int{len(r.ExecCommand), len(r.SendKeys)}
-	if r.PasteMultilineContent != "" {
-		tags = append(tags, 1)
-	} else {
-		tags = append(tags, 0)
+	tags := []int{
+		len(r.ExecCommand),
+		len(r.SendKeys),
+		len(r.PasteMultilineContent),
+		len(r.BrowserAction),
 	}
 	count := 0
 	for _, len := range tags {

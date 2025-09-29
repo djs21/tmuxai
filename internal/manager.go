@@ -13,14 +13,15 @@ import (
 )
 
 type AIResponse struct {
-	Message                string
-	SendKeys               []string
-	ExecCommand            []string
-	PasteMultilineContent  string
-	RequestAccomplished    bool
-	ExecPaneSeemsBusy      bool
-	WaitingForUserResponse bool
-	NoComment              bool
+	Message                string   `json:"message"`
+	SendKeys               []string `json:"send_keys"`
+	ExecCommand            []string `json:"exec_command"`
+	PasteMultilineContent  string   `json:"paste_multiline_content"`
+	RequestAccomplished    bool     `json:"request_accomplished"`
+	ExecPaneSeemsBusy      bool     `json:"exec_pane_seems_busy"`
+	WaitingForUserResponse bool     `json:"waiting_for_user_response"`
+	NoComment              bool     `json:"no_comment"`
+	BrowserAction          string   `json:"browser_action"`
 }
 
 // Parsed only when pane is prepared
