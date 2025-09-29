@@ -19,6 +19,12 @@ openrouter:
 #   api_version: 2025-04-01-preview
 #   deployment_name: gpt-4o
 
+# Browserless configuration for browser automation (requires chromedp)
+# Get a token from https://www.browserless.io/
+browserless:
+  token: your-browserless-token-here
+  base_url: wss://chrome.browserless.io  # WebSocket URL for remote Chrome instance
+
 # OpenAI example
 # openrouter:
 #   api_key: sk-XXXXXXXXX
