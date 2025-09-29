@@ -184,6 +184,13 @@ func (c *CLIInterface) newCompleter() *completion.CmdCompletionOrList2 {
 					return []string{"bash", "zsh", "fish"}, []string{"bash", "zsh", "fish"}
 				}
 			}
+
+			// Handle /browser subcommands
+			if len(field) > 0 && field[0] == "/browser" {
+				if len(field) == 1 || (len(field) == 2 && !strings.HasSuffix(field[1], " ")) {
+					return []string{"navigate", "screenshot", "getText"}, []string{"navigate", "screenshot", "getText"}
+				}
+			}
 			return nil, nil
 		},
 	}
